@@ -5722,8 +5722,11 @@ async function shutdown(code,reason){
   try{ if(reason) writeExitMark(reason); }catch(e){}
   loginSessClose();
   try{
-    if(ctx) await Promise.race([ ctx.close(), sleep(1200) ]);
+    if(ctx){ const _c=ctx; ctx=null; _c.close().catch(function(){}); }
   }catch(e){}
+  /* 不 await ctx.close()：Chromium 8~11 个子进程时 close 会阻塞 1~3 秒，
+     端口迟迟不放，托盘「退出程序」干等。改成 fire-and-forget，
+     配合 killByProfileAsync（独立 PowerShell 兜底收 Chromium）立刻放端口。 */
   killByProfileAsync();
   process.exit(code||0);
 }

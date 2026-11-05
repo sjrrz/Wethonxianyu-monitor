@@ -107,6 +107,20 @@ function Get-DeveloperMode {
     return $false
 }
 
+function Test-Port {
+    param([int]$Port)
+    try {
+        $c = [System.Net.Sockets.TcpClient]::new()
+        $ar = $c.BeginConnect('127.0.0.1', $Port, $null, $null)
+        if (-not $ar.AsyncWaitHandle.WaitOne(300)) { try { $c.Close() } catch { } return $false }
+        try { $c.EndConnect($ar) } catch { try { $c.Close() } catch { } return $false }
+        try { $c.Close() } catch { }
+        return $true
+    } catch {
+        return $false
+    }
+}
+
 function Get-SelfCheck {
     param([int]$Port)
     $url = "http://127.0.0.1:$Port/__scan/selfcheck?t=$([DateTime]::UtcNow.Ticks)"
@@ -218,8 +232,8 @@ function Stop-All {
         & $Log '监控没响应（可能已经不在了），直接清理'
     }
     for ($i = 0; $i -lt 40; $i++) {
-        Start-Sleep -Milliseconds 200
-        if (-not (Get-SelfCheck -Port $Port)) { break }
+        Start-Sleep -Milliseconds 150
+        if (-not (Test-Port -Port $Port)) { break }
     }
     # 2) 再关守护，否则它 10 分钟尊重期一过又会把监控拉起来
     $pids = Get-GuardPids
@@ -239,31 +253,11 @@ function Stop-Everything {
 
     $null = Stop-All -Port $Port -Log $Log
 
-    # ① 端口还占着 → 按端口找占用者收掉（monitor 被强杀时 socket 可能残留）
-    try {
-        $conns = Get-NetTCPConnection -LocalPort $Port -State Listen -ErrorAction SilentlyContinue
-        foreach ($c in $conns) {
-            if ($c.OwningProcess -and $c.OwningProcess -ne $PID) {
-                try {
-                    Stop-Process -Id $c.OwningProcess -Force -ErrorAction Stop
-                    & $Log "已收掉还占着端口 $Port 的进程 PID $($c.OwningProcess)"
-                } catch { }
-            }
-        }
-    } catch { }
-
-    # ② 本目录的 Chromium：只认命令行里带本目录 browser-profile 的进程，
-    #    绝不按进程名杀 —— 用户可能同时开着自己的 Chrome。
-    try {
-        $prof = Join-Path $root 'data\browser-profile'
-        $killed = 0
-        Get-CimInstance Win32_Process -Filter "Name='chrome.exe'" -ErrorAction SilentlyContinue |
-            Where-Object { $_.CommandLine -and $_.CommandLine.IndexOf($prof, [StringComparison]::OrdinalIgnoreCase) -ge 0 } |
-            ForEach-Object {
-                try { Stop-Process -Id $_.ProcessId -Force -ErrorAction Stop; $killed++ } catch { }
-            }
-        if ($killed -gt 0) { & $Log "已关闭本目录的浏览器内核进程 $killed 个" }
-    } catch { }
+    # 端口和 Chromium 的兜底收尾不在这里同步做了：monitor 自己体面退出时已经
+    # process.exit（释放端口）+ killByProfileAsync（后台收本目录 Chromium），
+    # 这里的 Get-NetTCPConnection / Get-CimInstance 只是「monitor 被强杀」的极端兜底，
+    # 不该让用户点「退出程序」时干等好几秒（首次 Get-NetTCPConnection JIT 就要 1 秒多）。
+    # 极端情况由下次启动的 cleanStaleOnStart / sweepDataJunk 兜底。
 
     # ③ 残留的 pid / 标记文件清掉，下次启动是干净状态
     foreach ($f in @('guard.pid', 'manual-start.json')) {
