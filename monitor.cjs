@@ -4212,7 +4212,7 @@ function startProxy(){
         }
         if(filterTreeCache[key]){
           res.writeHead(200,{"content-type":"application/json; charset=utf-8","cache-control":"no-store"});
-          return res.end(JSON.stringify({ok:true,keyword:kw,groups:filterTreeCache[key],fromCache:true}));
+          return res.end(JSON.stringify({ok:true,keyword:kw,groups:filterTreeCache[key],fromCache:true,holdOnce:!!holdOn}));
         }
         /* 【筛选项缓存只读 2026-11-04】cacheOnly=1 时只回缓存，绝不触网。
            用途：面板刷新后要把「已保存的筛选项」重新画出来 —— 这时候不该为了一次渲染
@@ -4223,19 +4223,22 @@ function startProxy(){
         }
         const base=(cfg.tasks||[]).find(function(t){return t.enabled!==false;})||(cfg.tasks||[])[0]||{keyword:""};
         const task=Object.assign({},base,{keyword:kw});
-        /* 【待命闸门 2026-11-04】待命期间「不动网」的承诺必须覆盖到这里。
-           面板关键词框改一下就会打这个接口，后端没缓存时原本会真发一次搜索请求 ——
-           于是「启动后点开始监控才动网」被绕过：只是改个关键词，就已经发出了一页请求。
-           待命中且无缓存时直接回一句提示，等解除待命后再拉。 */
-        if(holdOn){
-          res.writeHead(200,{"content-type":"application/json; charset=utf-8","cache-control":"no-store"});
-          return res.end(JSON.stringify({ok:false,hold:true,keyword:kw,groups:[],fromCache:false,
-            msg:"程序处于待命状态，不会发出搜索请求。点【▶ 开始监控】后再拉取筛选项。"}));
+        /* 【待命期拉筛选项 2026-11-05 修正】
+           11-04 这里原本是「待命中且无缓存 → 直接拒绝」，想法是守住「待命不动网」。
+           但真实工作流是「先配好筛选条件 → 再点开始监控」，而配条件时关键词往往是新词、
+           缓存里没有 ⇒ 用户永远拉不到筛选项，等于把配置流程卡死。这是守过头了。
+           现在的做法：待命期间也放行，但明确限定为「一次性」——
+           每调一次只发 1 个 request（下面是 callSearch(task,1)），拿完 tabList 立刻返回，
+           不进扫描循环、不写 hits/seen/word-hits、不推送。
+           为了不让人误以为已经开始扫了，日志单独记一行，返回里带 holdOnce 标记。 */
+        const holdOnce=!!holdOn;
+        if(holdOnce){
+          log("[筛选项] 待命期一次性拉取（关键词："+kw+"）—— 只发 1 个请求，不进扫描循环");
         }
         await callSearch(task,1);
         const groups=filterTreeCache[key]||[];
         res.writeHead(200,{"content-type":"application/json; charset=utf-8","cache-control":"no-store"});
-        return res.end(JSON.stringify({ok:true,keyword:kw,groups:groups,fromCache:false}));
+        return res.end(JSON.stringify({ok:true,keyword:kw,groups:groups,fromCache:false,holdOnce:holdOnce}));
       }catch(e){
         res.writeHead(200,{"content-type":"application/json; charset=utf-8","cache-control":"no-store"});
         return res.end(JSON.stringify({ok:false,error:String(e.message||e),groups:[]}));
