@@ -1,6 +1,6 @@
 {
-  "status": "notice",
-  "title": "链路自测",
-  "detail": "现在不设任何环境变量，看程序自己能不能连上 GitHub。",
-  "updatedAt": "2026-11-05T11:19:27.514Z"
+  "status": "ok",
+  "title": "",
+  "detail": "",
+  "updatedAt": "2026-11-05T11:20:00Z"
 }
