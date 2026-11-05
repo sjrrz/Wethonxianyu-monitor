@@ -2256,11 +2256,30 @@
     });
     v.querySelectorAll('input[data-f="keyword"]').forEach(function (inp) {
       var tmr = null;
+      var tidx = (function () { var b = inp.closest('[data-task]'); return b ? Number(b.getAttribute('data-task')) : 0; })();
       var doFetch = function () {
         var kw = inp.value.trim();
         if (!kw) return;
-        conf.tasks = readForm();
-        fetchCpvTree(kw, function () { renderFilter(); });
+        var key = String(kw).toLowerCase();
+        /* 【修「打不了字」2026-11-05】关键词输入框 oninput 防抖回调里原来无条件 renderFilter()
+           重建整个表单 —— 每次停手 600ms 就把输入框毁了（失焦 + 光标丢），用户还在打字就被打断，
+           表现就是「还没打完就像按了回车」。现在：已有筛选项的直接 return（啥也不重建）；
+           只有第一次取到这个词的筛选项时才重建一次，并且重建后恢复关键词输入框的焦点和光标，
+           取回期间用户又改了词就放弃这次重建，交给下一轮。 */
+        if (cpvTree[key]) return;
+        fetchCpvTree(kw, function () {
+          if (inp.value.trim().toLowerCase() !== key) return;
+          if (!cpvTree[key]) return;
+          conf.tasks = readForm();
+          var focusKw = (document.activeElement === inp);
+          var ss = focusKw && typeof inp.selectionStart === 'number' ? inp.selectionStart : null;
+          var se = focusKw && typeof inp.selectionEnd === 'number' ? inp.selectionEnd : null;
+          renderFilter();
+          if (focusKw) {
+            var ne = document.querySelector('#__scan_view [data-task="' + tidx + '"] input[data-f="keyword"]');
+            if (ne) { try { ne.focus(); if (ss != null) ne.setSelectionRange(ss, se); } catch (e) {} }
+          }
+        });
       };
       inp.oninput = function () {
         if (tmr) clearTimeout(tmr);
