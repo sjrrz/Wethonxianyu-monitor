@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>闲鱼扫货监控</title>
+<!-- 网页图标：由程序自己的 HTTP 服务提供（monitor.cjs 里的 /favicon.ico 路由），
+     不走外网，也不依赖任何 CDN。png 也一并声明，Chrome/Edge 会优先用 png。 -->
+<link rel="icon" type="image/x-icon" href="/favicon.ico?v=1">
+<link rel="icon" type="image/png" href="/icon.png?v=1">
+<link rel="apple-touch-icon" href="/icon.png?v=1">
+<style>
+  /* 独立模式的基础样式：只做最小 reset + 字体，其余全部由 inject.js 的 #__scan_panel 自带样式负责。
+     注意：inject.js 里所有规则都以 #__scan_panel 开头，不依赖任何外部 CSS 框架，
+     所以这里不要引入 Tailwind —— 以前靠宿主页面的 Tailwind 只是为了那个侧边栏按钮，
+     独立后不需要侧边栏，也就彻底摆脱框架依赖。 */
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;height:100%}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+    background:#f5f5f7;color:#0f172a;-webkit-font-smoothing:antialiased;
+  }
+  /* inject.js 加载前的占位，避免白屏 */
+  #boot{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px;color:#94a3b8;font-size:14px}
+  #boot .spin{width:26px;height:26px;border:3px solid #e2e8f0;border-top-color:#0ea5e9;border-radius:50%;animation:sp .8s linear infinite}
+  @keyframes sp{to{transform:rotate(360deg)}}
+  #boot.err{color:#dc2626}
+</style>
+</head>
+<body>
+
+<div id="boot"><div class="spin"></div><div>正在加载扫货监控…</div></div>
+
+<script>
+/* 独立模式标记：inject.js 读到 window.__SCAN_STANDALONE 就知道自己不在宿主页面里，
+   不需要去找侧边栏按钮，直接渲染全屏面板。
+   同时把"面板打开"这个动作从 click 事件改成自动执行。 */
+window.__SCAN_STANDALONE = true;
+</script>
+
+<script src="/__scan/inject.js" onerror="bootFail('面板脚本加载失败（/__scan/inject.js 取不到）。请确认监控进程还在运行。')"></script>
+
+<script>
+function bootFail(msg){
+  var b = document.getElementById('boot');
+  if (!b) return;
+  b.className = 'err';
+  b.innerHTML = '<div style="font-size:15px;font-weight:700;margin-bottom:6px">加载失败</div>'
+    + '<div style="font-size:13px;line-height:1.8;max-width:520px;text-align:center">' + msg + '</div>'
+    + '<div style="font-size:12px;color:#94a3b8;margin-top:10px">双击程序目录里的【闲鱼扫货监控.exe】重新启动即可。</div>';
+}
+/* 兜底：脚本正常加载后应当在 3 秒内把 #boot 收掉（inject.js 会接管 body）。
+   超时说明 inject.js 里抛错了，提示用户而不是干等着白屏。 */
+setTimeout(function(){
+  var b = document.getElementById('boot');
+  if (b) bootFail('面板脚本已加载但没有初始化。请按 F12 看控制台报错，或重启监控进程。');
+}, 3000);
+</script>
+
+</body>
+</html>

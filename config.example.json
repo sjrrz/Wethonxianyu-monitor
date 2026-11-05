@@ -1,0 +1,146 @@
+{
+  "_说明": "这是样板配置。复制一份改名为 config.json，再按自己的需求改下面几项就能跑：tasks（监控什么）、intervalSeconds（多久扫一次）、notify（要不要推手机）。",
+
+  "tasks": [
+    {
+      "name": "示例 · 手机 · 桂林",
+      "keyword": "苹果",
+      "minPrice": 500,
+      "maxPrice": 3999,
+      "province": "广西",
+      "city": "桂林",
+      "area": "",
+      "sort": "default",
+      "priceSort": "",
+      "quickFilters": [],
+      "brands": [],
+      "versions": [],
+      "storages": [],
+      "mustContain": [],
+      "excludeWords": ["有锁", "ID不能退", "配件"],
+      "descExcludeWords": [],
+      "sellerBlockWords": [],
+      "category": "phone",
+      "publishDays": 0,
+      "credit": "",
+      "rowsPerPage": 30,
+      "enabled": true
+    },
+    {
+      "name": "示例 · 通用品类 · 全国",
+      "keyword": "显卡",
+      "minPrice": null,
+      "maxPrice": null,
+      "province": "",
+      "city": "",
+      "area": "",
+      "sort": "default",
+      "priceSort": "",
+      "quickFilters": [],
+      "brands": [],
+      "versions": [],
+      "storages": [],
+      "mustContain": [],
+      "excludeWords": [],
+      "descExcludeWords": [],
+      "sellerBlockWords": [],
+      "category": "generic",
+      "publishDays": 0,
+      "credit": "",
+      "rowsPerPage": 30,
+      "enabled": false
+    }
+  ],
+
+  "intervalSeconds": 300,
+
+  "startMode": "hold",
+  "resumeMinGapSec": 180,
+  "jitterSeconds": 120,
+  "publishTimeOffsetHours": 0,
+  "port": 59288,
+  "autoOpen": true,
+
+  "notify": {
+    "enabled": false,
+    "priceDropNotify": true,
+    "priceDropPct": 0.03,
+    "onlyIncreaseRenotify": true,
+    "maxItemsPerMessage": 1,
+    "timeoutMs": 15000,
+    "retry": 3,
+    "channels": {
+      "serverchan": {
+        "enabled": false,
+        "sendkey": ""
+      },
+      "wecom": {
+        "enabled": false,
+        "webhook": ""
+      },
+      "feishu": {
+        "enabled": false,
+        "webhook": "",
+        "secret": ""
+      },
+      "gotify": {
+        "enabled": false,
+        "url": "",
+        "token": "",
+        "priority": 5
+      },
+      "bark": {
+        "enabled": false,
+        "url": ""
+      },
+      "generic": {
+        "enabled": false,
+        "url": "",
+        "type": "wecom"
+      }
+    }
+  },
+
+  "maxDescPerRound": 15,
+  "maxPages": 1,
+  "headless": false,
+  "showExistingOnFirstRun": false,
+  "noWindow": true,
+
+  "deepMaxPages": 50,
+  "deepSweep": true,
+  "deepPagesPerRound": 3,
+  "deepPageGapMs": 4000,
+
+  "autoBlockSellers": true,
+  "autoBlockMinCount": 5,
+  "autoBlockWindowDays": 7,
+  "autoBlockByName": true,
+  "autoBlockByDeals": false,
+  "autoBlockMinDeals": 100,
+  "autoBlockByShop": true,
+  "autoBlockMinItems": 40,
+  "autoBlockMaxProbePerRound": 5,
+
+  "seedMaxAgeHours": 24,
+  "incrementalPages": 2,
+  "freshMaxAgeHours": 24,
+  "placeholderPriceMax": 10,
+  "storageStrict": false,
+
+  "catchupMinGapHours": 2,
+  "catchupMaxPages": 4,
+  "catchupPageGapMs": 3500,
+  "catchupMaxGapHours": 24,
+  "catchupSilent": true,
+
+  "bootPushMaxAgeHours": 2,
+  "bootPushMaxCount": 15,
+
+  "remoteStatusUrl": "",
+
+  "developerMode": false,
+  "githubToken": "",
+  "githubRepo": "",
+  "githubBranch": "main"
+}
