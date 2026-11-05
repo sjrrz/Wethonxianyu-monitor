@@ -1,4 +1,8 @@
 const path=require("path"),fs=require("fs"),http=require("http"),crypto=require("crypto");
+/* 让 fetch 信任 Windows 系统证书库：加速器/企业代理会把根证书装进系统库，
+   Node 默认只认自带 Mozilla 根证书，不合并就会报 unable to verify the first certificate，
+   推送与公告全部失败。必须在任何 fetch 之前执行。 */
+try{ require("./lib-systemca.cjs"); }catch(e){}
 /* 运行组件（node + playwright）位置探测 —— 便于把整个文件夹搬到别的电脑/别的盘：
    1) 环境变量 YX_PW（可选）
    2) 本目录 runtime\playwright-driver\package（便携包自带）
@@ -20,9 +24,8 @@ function _resolvePW(){
   return cand[0];
 }
 const PW=_resolvePW();
-/* 浏览器目录也从 PW 反推，不再指望 .cmd 帮忙 export。
-   以前只有 1-启动监控.cmd 里设了 PLAYWRIGHT_BROWSERS_PATH，
-   于是任何绕过 cmd 的启动方式（按钮 / 直接 node monitor.cjs / 计划任务）
+/* 浏览器目录也从 PW 反推，不依赖任何启动脚本 export 环境变量。
+   否则任何启动方式（托盘 / 直接 node monitor.cjs / 计划任务）
    都会去找 C:\Users\...\ms-playwright，然后报 Executable doesn't exist。
    显式设过环境变量的仍然优先，不自作主张覆盖。 */
 if(!process.env.PLAYWRIGHT_BROWSERS_PATH){
@@ -40,11 +43,11 @@ const SEENF=path.join(DATA,"seen.json");
 const LOGF=path.join(DATA,"monitor.log");
 const DESCCF=path.join(DATA,"desc-cache.json");
 const INJECT=path.join(ROOT,"panel","inject.js");
-/* 【网页图标 2026-11-03】用户给的 icon.png 生成了 icon.ico（多尺寸），
+/* 【网页图标 2026-11-03】由用户提供的原图离线生成了 icon.ico（多尺寸）与 icon-web.png，
    浏览器标签页原来没有图标（默认空白纸），现在改成这个。
    放成常量而不是每次请求现读，是因为字体图标是静态资源，读一次缓存着就够。 */
-const FAVICON=path.join(ROOT,"favicon.ico");
-const ICONPNG=path.join(ROOT,"icon-web.png");
+const FAVICON=path.join(ROOT,"assets","favicon.ico");
+const ICONPNG=path.join(ROOT,"assets","icon-web.png");
 /* 【署名 2026-11-03】版本号与作者。这两个是程序身份，不是用户配置项，所以写死成常量；
    构建时间取本文件 mtime，改一次代码自动跟着变，不用手动维护。
    下发给面板的是 /__scan/hits.json 里新增的 about 字段（见下方 payload）。 */
@@ -4178,7 +4181,7 @@ function startProxy(){
       let b="/*missing*/"; try{b=fs.readFileSync(INJECT,"utf8")}catch(e){}
       res.writeHead(200,{"content-type":"application/javascript; charset=utf-8","cache-control":"no-store"}); return res.end(b);
     }
-    /* 网页图标：/favicon.ico、/__scan/favicon.ico、/icon.png 三个入口。
+    /* 网页图标：/favicon.ico、/__scan/favicon.ico 走 favicon.ico；/icon.png 走 icon-web.png（192×192）。
        浏览器默认去根路径要 /favicon.ico（取不到就是白纸标签），
        Chrome/Edge 更认 png，index.html 里两种都声明了，所以这里两种都得能取。
        缓存给 1 天：图标不会天天换，没必要每次刷新都重新拉。 */
@@ -4985,7 +4988,7 @@ function startProxy(){
       }
       /* 面板上的【停止监控】：先回执，再走正常收尾（关浏览器、清临时进程）后退出。
          等价于关掉那个黑色命令行窗口。 */
-      const body=JSON.stringify({ok:true,msg:"监控已停止，需要重新运行 1-启动监控.cmd"});
+      const body=JSON.stringify({ok:true,msg:"监控已停止，重新双击 闲鱼扫货监控.exe（或托盘菜单「启动监控」）即可继续"});
       res.writeHead(200,{"Content-Type":"application/json; charset=utf-8","Content-Length":Buffer.byteLength(body)});
       res.end(body);
       log("收到面板【停止监控】指令 → 3 秒后退出（已命中记录都已落盘）。");
@@ -5083,7 +5086,7 @@ function startProxy(){
           if(fs.existsSync(lp)) chromeExe="浏览器目录已就绪";
           else chromeExe="浏览器目录还没建（第一次启动会自己建）";
         }catch(e){}
-        add("ok","engine","浏览器内核",chromiumVer+"；"+chromeExe,"内核不会自己升级，只有手动双击 装浏览器.cmd 才会变");
+        add("ok","engine","浏览器内核",chromiumVer+"；"+chromeExe,"内核不会自己升级（Playwright 按写死的 revision 找目录），现状能跑就一直能跑");
 
         /* ⑥ 数据文件：能不能读、多少条。损坏的价格记忆会让"综合分"全变成 0，
            以前解析失败只写一行警告，用户完全看不到，这里直接标红。 */
@@ -5125,11 +5128,11 @@ function startProxy(){
           let bestMs=0, bestName="";
           if(fs.existsSync(sf)){ const t=fs.statSync(sf).mtimeMs; if(t>bestMs){ bestMs=t; bestName="guard-state.json"; } }
           if(fs.existsSync(lf)){ const t=fs.statSync(lf).mtimeMs; if(t>bestMs){ bestMs=t; bestName="guard.log"; } }
-          if(!bestMs) add("warn","guard","守护进程","没有任何守护痕迹（没有 guard-state.json / guard.log），说明从没用守护启动过","想要「死了自动重启 + 推告警」，用 1-启动监控-守护.cmd 启动");
+          if(!bestMs) add("warn","guard","守护进程","没有任何守护痕迹（没有 guard-state.json / guard.log），说明从没用守护启动过","想要「死了自动重启 + 推告警」，双击 闲鱼扫货监控.exe（托盘会拉起守护）");
           else{
             const idleMin=mins(now-bestMs);
             if(idleMin<=20) add("ok","guard","守护进程","守护正在运行（"+bestName+" 最近 "+idleMin+" 分钟内有更新）");
-            else add("warn","guard","守护进程","守护进程可能没在跑："+bestName+" 已经 "+idleMin+" 分钟没更新","双击 1-启动监控-守护.cmd 把它叫起来（不影响当前监控）");
+            else add("warn","guard","守护进程","守护进程可能没在跑："+bestName+" 已经 "+idleMin+" 分钟没更新","托盘菜单点「重启监控」即可把守护一起叫起来（不影响当前监控）");
           }
         }catch(e){}
 
@@ -5776,8 +5779,8 @@ try{
      ② 旧逻辑只要 process.kill 抛异常就算死。权限不足（EPERM）也会抛 —— 那并不代表父进程没了。
      修法：延迟 5 秒再开始守护（给父进程链留出退出/交接时间），并且只认 ESRCH（真正不存在）。 */
   /* 【修 BUG-P：被启动器拉起时必自杀】——这是"点了【立即重新登录】之后程序再也起不来"的真正原因。
-     `3-重新登录并恢复.cmd` 末尾是 `start "" cmd /c "1-启动监控.cmd"`，
-     那个 cmd 只是个一次性中转，它跑完就退；而 1-启动监控.cmd 又没有设 SCAN_KEEP_ALIVE，
+     `3-重新登录并恢复.cmd` 末尾曾经是 `start "" cmd /c "1-启动监控.cmd"`（该脚本已废弃，现在直接起 monitor），
+     那个 cmd 只是个一次性中转，它跑完就退；而它自己没有设 SCAN_KEEP_ALIVE，
      于是新起的 monitor 的 process.ppid 正是这个短命 cmd → 5 秒后 ESRCH → 自己退出。
      表现为：登录窗口关掉、监控窗口一闪就没、面板打不开，用户只看到"启动不了 / 没登录"。
 

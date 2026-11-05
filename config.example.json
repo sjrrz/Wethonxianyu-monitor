@@ -1,6 +1,5 @@
 {
   "_说明": "这是样板配置。复制一份改名为 config.json，再按自己的需求改下面几项就能跑：tasks（监控什么）、intervalSeconds（多久扫一次）、notify（要不要推手机）。",
-
   "tasks": [
     {
       "name": "示例 · 手机 · 桂林",
@@ -17,7 +16,11 @@
       "versions": [],
       "storages": [],
       "mustContain": [],
-      "excludeWords": ["有锁", "ID不能退", "配件"],
+      "excludeWords": [
+        "有锁",
+        "ID不能退",
+        "配件"
+      ],
       "descExcludeWords": [],
       "sellerBlockWords": [],
       "category": "phone",
@@ -51,16 +54,13 @@
       "enabled": false
     }
   ],
-
   "intervalSeconds": 300,
-
   "startMode": "hold",
   "resumeMinGapSec": 180,
   "jitterSeconds": 120,
   "publishTimeOffsetHours": 0,
   "port": 59288,
   "autoOpen": true,
-
   "notify": {
     "enabled": false,
     "priceDropNotify": true,
@@ -100,18 +100,15 @@
       }
     }
   },
-
   "maxDescPerRound": 15,
   "maxPages": 1,
   "headless": false,
   "showExistingOnFirstRun": false,
   "noWindow": true,
-
   "deepMaxPages": 50,
   "deepSweep": true,
   "deepPagesPerRound": 3,
   "deepPageGapMs": 4000,
-
   "autoBlockSellers": true,
   "autoBlockMinCount": 5,
   "autoBlockWindowDays": 7,
@@ -121,24 +118,19 @@
   "autoBlockByShop": true,
   "autoBlockMinItems": 40,
   "autoBlockMaxProbePerRound": 5,
-
   "seedMaxAgeHours": 24,
   "incrementalPages": 2,
   "freshMaxAgeHours": 24,
   "placeholderPriceMax": 10,
   "storageStrict": false,
-
   "catchupMinGapHours": 2,
   "catchupMaxPages": 4,
   "catchupPageGapMs": 3500,
   "catchupMaxGapHours": 24,
   "catchupSilent": true,
-
   "bootPushMaxAgeHours": 2,
   "bootPushMaxCount": 15,
-
-  "remoteStatusUrl": "",
-
+  "remoteStatusUrl": "https://raw.githubusercontent.com/sjrrz/Wethonxianyu-monitor/main/STATUS.json",
   "developerMode": false,
   "githubToken": "",
   "githubRepo": "",

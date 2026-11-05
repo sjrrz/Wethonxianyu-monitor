@@ -16,6 +16,7 @@
  *   "githubBranch": "main"
  */
 'use strict';
+try{ require('./lib-systemca.cjs'); }catch(e){}  /* 系统证书库（加速器自签根证书） */
 const fs = require('fs');
 const path = require('path');
 

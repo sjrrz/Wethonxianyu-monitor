@@ -780,7 +780,7 @@
           html += '<div style="font-size:12px;color:#8e8e93;margin-top:12px;line-height:1.8">'
             + '这项检查<b>不会</b>发任何搜索请求，也不会改数据，可以随时点。<br>'
             + '如果某项标黄/标红又不知道怎么处理，把这个结果截图发出来即可。<br>'
-            + '详细排查步骤见程序目录里的 <code>维护手册.md</code>。</div>';
+            + '详细排查步骤见程序目录里的 <code>docs\\维护手册.md</code>。</div>';
           var v = document.getElementById('__scan_view');
           if (v) v.innerHTML = html;
           toast(d.rank === 'bad' ? '体检发现需要处理的问题' : (d.rank === 'warn' ? '体检完成，有几项要留意' : '体检完成，一切正常'));
@@ -1643,7 +1643,7 @@
         txt.textContent = '连不上监控进程';
         box.title = '拿不到 /__scan/hits.json：' + e.message
           + '\n\n这不是登录问题。请确认监控窗口还在运行；'
-          + '\n如果窗口闪一下就没了，双击【1-启动监控.cmd】重新启动。';
+          + '\n如果窗口闪一下就没了，双击【闲鱼扫货监控.exe】重新启动。';
         if (btn) { btn.className = 'lgn-btn'; btn.textContent = '重新启动监控'; }
       }
       var bar = document.getElementById('__scan_loginbar');

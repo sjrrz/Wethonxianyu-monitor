@@ -6,7 +6,7 @@
  *
  * 用法：
  *   直接用便携 node 跑：  runtime\playwright-driver\node.exe guard.cjs
- *   或双击：              1-启动监控-守护.cmd
+ *   或双击：              闲鱼扫货监控.exe（托盘会自己拉起守护）
  *
  * 停止：关掉这个守护窗口即可（它不会去杀 monitor；要停监控请用面板的「停止」或 3-重新登录并恢复.cmd）
  *
@@ -57,7 +57,7 @@ const STATEF = path.join(DATA, 'guard-state.json');
 const EXITMARKF = path.join(DATA, 'monitor-exit.json');
 /* 【2026-10-29 新增】自己的 pid 落盘。
    托盘要判断「本目录的守护在不在跑」，不能靠命令行里搜 guard.cjs ——
-   1-启动监控-守护.cmd 传进去的是相对路径，命令行里看不到绝对路径，
+   启动参数传的是相对路径，命令行里看不到绝对路径，
    于是同一个目录的多个副本（备份包解压出来的那份）会互相认错，
    点「停止监控」会把别人的守护杀掉。pid 文件是唯一不会认错的办法。 */
 const PIDF = path.join(DATA, 'guard.pid');
@@ -403,7 +403,7 @@ function clearPid() {
         + '· 界面端口被别的程序占用（同时开了两个监控）\n'
         + '· 浏览器配置目录被锁（上次的浏览器进程没退干净）\n'
         + '处理：运行【0-首次扫码登录.cmd】重新登录；关掉多余的监控窗口只留一个；'
-        + '都不行就重启电脑后运行【1-启动监控-无窗口.vbs】。');
+        + '都不行就重启电脑后双击【闲鱼扫货监控.exe】。');
       if (sent) { gstate.failAlerted = true; gstate.alerted = true; gstate.lastAlertAt = Date.now(); }
       gsave(true);
     }

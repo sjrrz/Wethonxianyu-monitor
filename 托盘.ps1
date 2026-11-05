@@ -121,7 +121,7 @@ function Get-SelfCheck {
 
 function Get-GuardPids {
     # 靠 data\guard.pid 认自己人，而不是在命令行里搜 'guard.cjs'。
-    # 原因：1-启动监控-守护.cmd 传的是相对路径，命令行里没有绝对路径，
+    # 原因：启动参数传的是相对路径，命令行里没有绝对路径，
     # 同一目录的多个副本（备份包解压出来的那份）会互相认错 ——
     # 点「停止监控」把别人的守护杀掉、点「启动监控」又因为别人在跑而拒绝启动。
     $pidf = Join-Path $root 'data\guard.pid'
@@ -277,12 +277,15 @@ function Stop-Everything {
 }
 
 # ---------------------------------------------------------------- 图标
-# 【PNG 图标 2026-11-03】用户给了 icon.png（1254×1254 带透明通道），要求换掉网页图标和托盘图标。
-# 托盘四态仍然是「底图 + 右下角状态圆点」：底图 = icon.png，圆点绿/黄/红/灰原样不动。
+# 【PNG 图标 2026-11-03】用户提供了一张 1254×1254 带透明通道的原图，用来换掉网页图标和托盘图标。
+# 托盘四态仍然是「底图 + 右下角状态圆点」：底图 = 用户原图，圆点绿/黄/红/灰原样不动。
 # 这样外观换成用户自己的图，状态语义一点没变 —— 用户依旧靠右下角颜色判断死活。
-# 四张 ico（tray-ok / tray-warn / tray-bad / tray-off）由 icon.png 离线生成在程序目录，
+# 四张 ico（tray-ok / tray-warn / tray-bad / tray-off）由原图离线生成在程序目录，
 # 运行时只读文件、不再手绘 —— 少一段 GDI+ 代码，也不用每次 tick 重新生成位图。
 # 万一 ico 被删了（拷贝给别人时漏拷），回落成原来那个纯色圆点，托盘绝不因此起不来。
+# 【目录整理 2026-11-05】四张 ico 移到了 assets\ 子目录，这里只写文件名，
+# 实际路径在 New-DotIcon 里用 $script:TrayIcoDir 拼。
+$script:TrayIcoDir = Join-Path $root 'assets'
 $script:TrayIcoMap = @{
     '#16a34a' = 'tray-ok.ico'
     '#f59e0b' = 'tray-warn.ico'
@@ -295,7 +298,7 @@ function New-DotIcon {
     $key = ([string]$Hex).ToLower()
     $file = $script:TrayIcoMap[$key]
     if ($file) {
-        $full = Join-Path $root $file
+        $full = Join-Path $script:TrayIcoDir $file
         if (Test-Path -LiteralPath $full) {
             try {
                 # 托盘只用得到 SmallIconSize（本机 150% DPI 下是 24×24）。

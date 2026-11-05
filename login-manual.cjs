@@ -177,7 +177,7 @@ async function probeFreshness(ctx,page){
           for(const r of (fr.top||[])) log("     "+Math.round((Date.now()-r.t)/60000)+" 分钟前  ¥"+r.p+"  "+r.ttl);
           log("  → 结论："+((fr.newestMin!==null&&fr.newestMin<90)?"✅ 登录后能拿到【刚刚发布】级的最新数据（问题解决）":"❌ 即使真登录了，接口给的最新仍是 "+fr.newestTxt+"（说明登录态不是原因）"));
         }
-        log("浏览器窗口 15 秒后自动关闭，登录态已保存，之后双击【1-启动监控.cmd】即可");
+        log("浏览器窗口 15 秒后自动关闭，登录态已保存，之后双击【闲鱼扫货监控.exe】即可");
         await sleep(15000);
         try{ process.kill(ctx.browser().process().pid); }catch(e){ try{ await ctx.close(); }catch(_){} }
         return;
