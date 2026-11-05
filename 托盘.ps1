@@ -217,8 +217,8 @@ function Stop-All {
     } catch {
         & $Log '监控没响应（可能已经不在了），直接清理'
     }
-    for ($i = 0; $i -lt 20; $i++) {
-        Start-Sleep -Milliseconds 500
+    for ($i = 0; $i -lt 40; $i++) {
+        Start-Sleep -Milliseconds 200
         if (-not (Get-SelfCheck -Port $Port)) { break }
     }
     # 2) 再关守护，否则它 10 分钟尊重期一过又会把监控拉起来

@@ -4995,7 +4995,7 @@ function startProxy(){
       res.writeHead(200,{"Content-Type":"application/json; charset=utf-8","Content-Length":Buffer.byteLength(body)});
       res.end(body);
       log("收到面板【停止监控】指令 → 3 秒后退出（已命中记录都已落盘）。");
-      setTimeout(function(){ shutdown(0,"stop"); },3000);
+      setTimeout(function(){ shutdown(0,"stop"); },500); /* 2026-11-05 退出卡顿优化：回执同步发出，500ms 足够，无需等 3 秒 */
       return;
     }
 
