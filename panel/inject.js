@@ -2266,7 +2266,14 @@
            表现就是「还没打完就像按了回车」。现在：已有筛选项的直接 return（啥也不重建）；
            只有第一次取到这个词的筛选项时才重建一次，并且重建后恢复关键词输入框的焦点和光标，
            取回期间用户又改了词就放弃这次重建，交给下一轮。 */
-        if (cpvTree[key]) return;
+        /* 【新建任务拉不到筛选项 2026-11-06】以前这里是 `if (cpvTree[key]) return;` ——
+           只要这个词在缓存里就直接跳过，可新建任务的框还停在「关键词为空」的样子
+           （只画了提示、没画下拉也没画「拉取筛选项」按钮），于是输入缓存过的词时
+           既不拉取也不重画，用户看到的就是「什么都没有」。
+           现在只有当框里画的正好是这个词时才跳过。 */
+        var cpvBoxEl = inp.closest('[data-task]') && inp.closest('[data-task]').querySelector('[data-cpv-kw]');
+        var cpvShown = cpvBoxEl ? String(cpvBoxEl.getAttribute('data-cpv-kw') || '') : '';
+        if (cpvTree[key] && cpvShown === key) return;
         fetchCpvTree(kw, function () {
           if (inp.value.trim().toLowerCase() !== key) return;
           if (!cpvTree[key]) return;
@@ -2761,6 +2768,9 @@
     };
     var cpvBox = function (t) {
       var kw = String(t.keyword || '').trim();
+      /* 【新建任务拉不到筛选项 2026-11-06】记下这个框按哪个词画的。
+         空词时是空串；输入关键词后靠它判断「需不需要重画」。 */
+      var cpvShownKw = String(kw).toLowerCase();
       var groups = kw ? (cpvTree[String(kw).toLowerCase()] || []) : [];
       var header = '<div style="display:flex;align-items:center;gap:10px;justify-content:space-between">'
         + '<span style="font-size:13px;font-weight:600;color:#1d1d1f">官方筛选项（跟着关键词走）</span>'
@@ -2784,7 +2794,7 @@
           body += '</div>';
         }
       }
-      return '<div class="fr" style="margin-bottom:12px">' + header + body + '</div>';
+      return '<div class="fr" style="margin-bottom:12px" data-cpv-kw="' + esc(cpvShownKw) + '">' + header + body + '</div>';
     };
     var provOpts = function (cur) {
       var groups = catalog.regionGroups || [];
