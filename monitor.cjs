@@ -4692,6 +4692,8 @@ function startProxy(){
       return res.end(JSON.stringify({
         tasks:cfg.tasks,
         intervalSeconds:cfg.intervalSeconds,
+        /* 抖动秒数：面板「启动与节奏」要能读到当前值，否则显示空/0，改完也看不出生效没有 */
+        jitterSeconds:Number(cfg.jitterSeconds!=null?cfg.jitterSeconds:30),
         /* 启动待命：面板要能读到当前值，并据此渲染「▶ 开始监控 / ⏸ 暂停扫描」 */
         startMode:(String(cfg.startMode||"" )==="auto")?"auto":"hold",
         /* 连点保护间隔（秒）：面板/调试要能读到当前值 */
